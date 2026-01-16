@@ -1,14 +1,25 @@
 terraform {
   required_version = ">= 1.0"
-  backend "gcs" {
-    bucket  = "projects-luis"
-    prefix  = "churn-predictor/state"
-  }
+  # backend "gcs" {
+  #   bucket  = "projectss-luis-tf-state"
+  #   prefix  = "churn-predictor/state"
+  # }
   required_providers {
     google = {
       source  = "hashicorp/google"
       version = "~> 4.0"
     }
+  }
+}
+
+# 0. Terraform State Bucket (Chicken & Egg problem solution)
+resource "google_storage_bucket" "tf_state_bucket" {
+  name          = "${var.project_id}-tf-state"
+  location      = var.region
+  force_destroy = true
+  uniform_bucket_level_access = true
+  versioning {
+    enabled = true
   }
 }
 
@@ -19,7 +30,7 @@ provider "google" {
 
 # 1. Enable APIs
 resource "google_project_service" "apis" {
-  for_each = timeset([
+  for_each = toset([
     "compute.googleapis.com",
     "aiplatform.googleapis.com",
     "bigquery.googleapis.com",
@@ -73,7 +84,7 @@ resource "google_service_account" "pipeline_sa" {
 
 # Grant necessary roles to the Service Account
 resource "google_project_iam_member" "pipeline_sa_roles" {
-  for_each = timeset([
+  for_each = toset([
     "roles/aiplatform.user",
     "roles/bigquery.dataEditor",
     "roles/bigquery.jobUser",

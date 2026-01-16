@@ -6,3 +6,4 @@ pandas
 scikit-learn
 xgboost
 pytest
+google_cloud_pipeline_components
